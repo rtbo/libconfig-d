@@ -228,14 +228,22 @@ class AggregateSetting : Setting {
         }
 
         inout(Setting) getChild(string name) inout {
-            if (name.length > 2 && name[0] == '[' && name[$-1] == ']') {
-                import std.conv : to;
-                immutable ind = to!size_t(name[1 .. $-1]);
-                return child(ind);
-            }
-            else {
-                return super.child(name);
-            }
+            import std.algorithm : find;
+            import std.exception : enforce;
+            import std.range : empty;
+            import std.conv : to;
+
+            auto square = find(name, '[');
+            auto childName = name[0 .. $-square.length];
+            auto child = super.child(childName);
+
+            if (square.empty) return child;
+
+            assert(square[0] == '[');
+            enforce(square[$-1] == ']');
+
+            immutable ind = to!size_t(name[1 .. $-1]);
+            return child.child(ind);
         }
 
         Setting[] _children;
