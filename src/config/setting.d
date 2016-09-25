@@ -151,7 +151,7 @@ abstract class Setting {
     }
 }
 
-
+/// Setting that holds a scalar value that can be one of Bool, Float, Integer or String
 class ScalarSetting : Setting {
 
     @property T value(T)() const if (isScalarCandidate!T) {
