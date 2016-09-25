@@ -75,8 +75,8 @@ abstract class Setting {
     @property inout(Config) config() inout { return _config; }
     @property inout(AggregateSetting) parent() inout { return _parent; }
 
-    inout(Setting) elem(in size_t idx) inout { return null; }
-    inout(Setting) member(in string name) inout { return null; }
+    inout(Setting) child(in size_t idx) inout { return null; }
+    inout(Setting) child(in string name) inout { return null; }
     inout(Setting) lookUp(in string path) inout { return null; }
 
     bool lookUpValue(T)(in string path, ref T value) const {
@@ -193,7 +193,7 @@ class ScalarSetting : Setting {
 class AggregateSetting : Setting {
 
 
-    override inout(Setting) elem(in size_t idx) inout {
+    override inout(Setting) child(in size_t idx) inout {
         if (idx >= _children.length) return null;
         return _children[idx];
     }
@@ -231,10 +231,10 @@ class AggregateSetting : Setting {
             if (name.length > 2 && name[0] == '[' && name[$-1] == ']') {
                 import std.conv : to;
                 immutable ind = to!size_t(name[1 .. $-1]);
-                return elem(ind);
+                return child(ind);
             }
             else {
-                return member(name);
+                return super.child(name);
             }
         }
 
@@ -277,7 +277,7 @@ class ListSetting : AggregateSetting {
 
 class GroupSetting : AggregateSetting {
 
-    override inout(Setting) member(in string name) inout {
+    override inout(Setting) child(in string name) inout {
         foreach (c; _children) {
             if (c.name == name) return c;
         }
