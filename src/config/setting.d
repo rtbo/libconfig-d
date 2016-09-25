@@ -77,6 +77,8 @@ abstract class Setting {
 
     inout(Setting) child(in size_t idx) inout { return null; }
     inout(Setting) child(in string name) inout { return null; }
+    bool remove(in size_t idx) { return false; }
+    bool remove(in string path) { return false; }
     inout(Setting) lookUp(in string path) inout { return null; }
 
     bool lookUpValue(T)(in string path, ref T value) const {
@@ -196,6 +198,37 @@ class AggregateSetting : Setting {
     override inout(Setting) child(in size_t idx) inout {
         if (idx >= _children.length) return null;
         return _children[idx];
+    }
+
+    override bool remove(in size_t idx) {
+        import std.algorithm : remove;
+
+        size_t origLen = _children.length;
+        _children = remove(_children, idx);
+        return origLen != _children.length;
+    }
+
+    override bool remove(in string path) {
+        import config.config : pathTok;
+        import config.util : findSplitAmong;
+        import std.range : empty;
+
+        if (name.empty) return false;
+
+        immutable split = path.findSplitAmong(pathTok);
+
+        auto s = getChild(split[0]);
+        if (!s) return false;
+
+        if (!split[2].empty) {
+            return s.remove(split[2]);
+        }
+        else {
+            import std.algorithm : remove;
+            auto origLen = _children.length;
+            _children = remove!(c => c is s)(_children);
+            return _children.length != origLen;
+        }
     }
 
     override inout(Setting) lookUp(in string name) inout {
