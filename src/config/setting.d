@@ -89,6 +89,12 @@ abstract class Setting {
         return false;
     }
 
+    @property size_t index() const {
+        import std.algorithm : countUntil;
+        if (!parent) return -1;
+        return countUntil(parent._children, this);
+    }
+
     @property bool isGroup() const {
         return _type == Type.Group;
     }
