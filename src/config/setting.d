@@ -73,7 +73,7 @@ abstract class Setting {
     @property Type type() const { return _type; }
 
     @property inout(Config) config() inout { return _config; }
-    @property inout(Setting) parent() inout { return _parent; }
+    @property inout(AggregateSetting) parent() inout { return _parent; }
 
     inout(Setting) elem(in size_t idx) inout { return null; }
     inout(Setting) member(in string name) inout { return null; }
@@ -131,7 +131,7 @@ abstract class Setting {
     }
 
     package {
-        this(Config config, Setting parent, string name, Type type) {
+        this(Config config, AggregateSetting parent, string name, Type type) {
             _config = config;
             _parent = parent;
             _name = name;
@@ -145,7 +145,7 @@ abstract class Setting {
         Nullable!IntegerFormat _integerFormat;
 
         Config _config;
-        Setting _parent;
+        AggregateSetting _parent;
         string _file;
         int _lineNumber;
     }
