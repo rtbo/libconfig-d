@@ -208,7 +208,9 @@ class AggregateSetting : Setting {
         immutable split = name.findSplitAmong(pathTok);
 
         auto s = getChild(split[0]);
-        return split[2].empty ? s : s.lookUp(split[2]);
+
+        if (!split[2].empty && s) return s.lookUp(split[2]);
+        return s;
     }
 
     package {
