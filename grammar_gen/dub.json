@@ -1,0 +1,9 @@
+{
+	"name": "cfg_grammar_gen",
+	"targetType": "executable",
+	"authors": [ "Remi Thebault" ],
+	"description": "libconfig grammar generator",
+	"copyright": "Copyright © 2016, Remi Thebault",
+	"license": "MIT",
+    "dependencies": { "pegged": "~>0.3.2" }
+}

@@ -1,0 +1,15 @@
+{
+	"name": "libconfig-d",
+	"authors": [
+		"Remi Thebault"
+	],
+	"description": "D library for processing configuration files",
+	"copyright": "Copyright © 2016, Remi Thebault",
+	"license": "MIT",
+	"dependencies": {
+		"pegged" : "~>0.3.2"
+	},
+	"preGenerateCommands": [
+		"cd $PACKAGE_DIR/grammar_gen && dub run -- -m config.grammar -o $PACKAGE_DIR/src/config/grammar"
+	]
+}

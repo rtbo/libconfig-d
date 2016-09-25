@@ -1,0 +1,13 @@
+# Dub
+.dub
+dub.selections.json
+__test__library__
+
+# Binaries
+*.a
+*.lib
+*.exe
+
+# libconfig-d
+grammar_gen/cfg_grammar_gen
+src/config/grammar.d
