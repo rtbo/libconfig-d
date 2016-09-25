@@ -113,6 +113,9 @@ abstract class Setting {
     @property bool isNumber() const {
         return _type.isNumber;
     }
+    @property bool isRoot() const {
+        return _parent is null;
+    }
 
     @property auto asScalar() inout {
         return cast(ScalarSetting)this;
