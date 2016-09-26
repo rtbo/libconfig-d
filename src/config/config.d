@@ -45,9 +45,6 @@ class Config {
     @property ushort floatPrecision() const { return _floatPrecision; }
     @property void floatPrecision(ushort val) { _floatPrecision = val; }
 
-    @property string includeDir() const { return _includeDir; }
-    @property void includeDir(string dir) { _includeDir = dir; }
-
     package {
         Setting makeSetting(AggregateSetting parent, string name, Type type) {
             switch(type) {
@@ -70,7 +67,6 @@ class Config {
 
     private {
         Setting _root;
-        string _includeDir;
         BitFlags!Option _options;
         IntegerFormat _defaultIntegerFormat;
         ushort _tabWidth;
