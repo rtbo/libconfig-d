@@ -250,6 +250,17 @@ class AggregateSetting : Setting {
             assert(type.isAggregate);
             super(config, parent, name, type);
         }
+
+        void addChild(Setting child) {
+            assert(child.config is config && child.parent is this);
+            _children ~= child;
+        }
+
+        void setChildren(Setting[] children) {
+            import std.algorithm : canFind;
+            assert(!children.canFind!((c) { return c.config !is config || c.parent !is this; }));
+            _children = children;
+        }
     }
 
     private {
