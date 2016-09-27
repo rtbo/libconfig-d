@@ -6,7 +6,7 @@ Config:
 
     Setting     <   Name (':' / '=') Value (';' / ',')? Comment*
 
-    Value       <-  Comment* (Scalar / Array / List) Comment*
+    Value       <-  Comment* (Scalar / Array / List / Group) Comment*
     Scalar      <-  Comment* (Bool / Float / Integer / String) Comment*    # Float MUST be before Integer
     Array       <   '[' ']' /
                     '[' Bool (',' Bool )* ']' /
