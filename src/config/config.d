@@ -68,7 +68,7 @@ class Config {
     }
 
     private {
-        Setting _root;
+        GroupSetting _root;
         BitFlags!Option _options;
         IntegerFormat _defaultIntegerFormat;
         ushort _tabWidth;
