@@ -2,7 +2,7 @@ module config.setting;
 
 import config.config : Config;
 
-import std.traits : isNumeric, isSomeString;
+import std.traits : isIntegral, isFloatingPoint, isSomeString;
 import std.typecons : Nullable;
 
 /// The type of a Setting
@@ -25,8 +25,9 @@ bool isScalarCompatible(T)(in Type type) pure {
         case Type.Bool:
             return is(T == bool);
         case Type.Int:
+            return isIntegral!T;
         case Type.Float:
-            return isNumeric!T;
+            return isFloatingPoint!T;
         case Type.String:
             return isSomeString!T;
         default:
@@ -166,12 +167,10 @@ abstract class Setting {
 class ScalarSetting : Setting {
 
     @property T value(T)() const if (isScalarCandidate!T) {
-        enforce(_type.isScalarCompatible!T);
-        return _value.coerce!T;
+        return _value.get!T;
     }
 
     @property void value(T)(T val) if (isScalarCandidate!T) {
-        if (isAggregate) orpheanChildren();
         _type = scalarType!T;
         _value = val;
     }
