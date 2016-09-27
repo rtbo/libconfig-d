@@ -30,6 +30,8 @@ class Config {
         _floatPrecision = 2;
     }
 
+    @property inout(GroupSetting) root() inout { return _root; }
+
     @property BitFlags!Option options() const { return _options; }
     @property void options(BitFlags!Option options) { _options = options; }
 
