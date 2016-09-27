@@ -8,11 +8,7 @@ Config:
 
     Value       <-  Comment* (Scalar / Array / List / Group) Comment*
     Scalar      <-  Comment* (Bool / Float / Integer / String) Comment*    # Float MUST be before Integer
-    Array       <   '[' ']' /
-                    '[' Bool (',' Bool )* ']' /
-                    '[' Integer (',' Integer )* ']' /
-                    '[' Float (',' Float )* ']' /
-                    '[' String (',' String )* ']'
+    Array       <   '[' ( Scalar (',' Scalar)* )? ']'
     List        <   '(' ( Value (',' Value)* )? ')'
     Group       <   '{' Setting* '}'
 
