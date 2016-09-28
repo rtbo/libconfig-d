@@ -95,7 +95,6 @@ struct ConfigParser {
             }
         }
 
-
         return conf;
     }
 

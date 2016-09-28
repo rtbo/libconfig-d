@@ -253,12 +253,28 @@ class AggregateSetting : Setting {
 
         void addChild(Setting child) {
             assert(child.config is config && child.parent is this);
+            debug {
+                if (type == Type.Group) {
+                    import std.algorithm : map, canFind;
+                    assert(!_children.map!(c => c.name).canFind(child.name));
+                }
+            }
             _children ~= child;
         }
 
         void setChildren(Setting[] children) {
-            import std.algorithm : canFind;
-            assert(!children.canFind!((c) { return c.config !is config || c.parent !is this; }));
+            import std.algorithm : map, all;
+            assert(children.map!(c => c.config).all!(cf => cf == config));
+            assert(children.map!(c => c.parent).all!(p => p == parent));
+            debug {
+                if (type == Type.Group) {
+                    bool[string] seen;
+                    foreach (c; children) {
+                        assert(!(c.name in seen));
+                        seen[c.name] = true;
+                    }
+                }
+            }
             _children = children;
         }
     }
@@ -266,7 +282,6 @@ class AggregateSetting : Setting {
     private {
 
         Setting addChild(string name, Type type) {
-            if (!validateName(name)) return null;
             auto s = config.makeSetting(this, name, type);
             if (s) _children ~= s;
             return s;
@@ -338,6 +353,9 @@ class GroupSetting : AggregateSetting {
     }
 
     Setting add(string name, Type type) {
+        import std.exception : enforce;
+        enforce(validateName(name));
+        enforce(!child(name));
         return addChild(name, type);
     }
 
@@ -351,11 +369,13 @@ class GroupSetting : AggregateSetting {
 
 private:
 
-bool validateName(string name) {
+bool validateName(in string name) pure {
     import std.utf : byDchar;
     import std.uni : isAlpha;
     import std.ascii : isDigit;
     import std.algorithm : canFind;
+
+    if (name.length == 0) return false;
 
     auto dec = name.byDchar;
 
