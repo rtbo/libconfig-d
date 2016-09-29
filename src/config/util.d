@@ -1,7 +1,7 @@
 module config.util;
 
-import std.range : isForwardRange, isRandomAccessRange, hasLength;
-import std.traits : isSomeString;
+import std.range : ElementType, isForwardRange, isRandomAccessRange, hasLength;
+import std.traits : isSomeString, isSomeChar;
 
 auto findSplitAmong(alias pred="a == b", R1, R2)(R1 seq, R2 choices)
 if (isForwardRange!R1 && isForwardRange!R2)
@@ -104,5 +104,141 @@ unittest {
         assert(equal(split2[0], "name1.name2"));
         assert(equal(split2[1], ""));
         assert(equal(split2[2], ""));
+    }
+}
+
+
+
+auto stripComments(R)(R input)
+if (isForwardRange!R && isSomeChar!(ElementType!R))
+{
+    import std.range.primitives;
+    import std.algorithm : filter;
+
+    struct Result
+    {
+        R _input;
+        ElementType!R[] _lookAhead;
+
+        @property bool empty()
+        {
+            return _lookAhead.empty && _input.empty;
+        }
+
+        @property auto ref front()
+        {
+            if (_lookAhead.length) {
+                return _lookAhead[0];
+            }
+            else {
+                return _input.front;
+            }
+        }
+
+        void popFront()
+        {
+            if (_lookAhead.length) {
+                _lookAhead = _lookAhead[1 .. $];
+                return;
+            }
+
+            _input.popFront();
+            if (_input.empty) return;
+
+            if (_input.front == '#') popUntilEol();
+
+            else if (_input.front == '/')
+            {
+                _input.popFront();
+                if (_input.empty) return;
+
+                if (_input.front == '/') popUntilEol();
+                else if (_input.front == '*') popUntilEndBlock();
+
+                else _lookAhead ~= _input.front;
+            }
+        }
+
+        private void popUntilEol()
+        {
+            do {
+                _input.popFront();
+            }
+            while (!_input.empty && !(_input.front == '\r' || _input.front == '\n'));
+        }
+
+        private void popUntilEndBlock()
+        {
+            while (1) {
+                do {
+                    _input.popFront();
+                    if (_input.empty) {
+                        throw new Exception("comment block not closed");
+                    }
+                }
+                while (_input.front != '*');
+
+                _input.popFront();
+                if (_input.empty) {
+                    throw new Exception("comment block not closed");
+                }
+                if (_input.front == '/') {
+                    _input.popFront();
+                    break;
+                }
+            }
+        }
+    }
+
+    return Result(input, []);
+}
+
+unittest {
+    import std.algorithm : equal;
+    import std.stdio : writeln;
+
+    auto text = [[
+        "some text // comment\n"
+        "more text",
+
+        "some text \n"
+        "more text"
+    ],
+    [
+        "some text # comment\n"
+        "more text",
+
+        "some text \n"
+        "more text"
+    ],
+    [
+        "some text /* inlined comment */ more text",
+
+        "some text  more text"
+    ],
+    [
+        "some text /* comment with // inlined\n"
+        "over 2 lines */ more text",
+
+        "some text  more text"
+    ],
+    [
+        "some text // comment with /* inlined\n"
+        "more text",
+
+        "some text \n"
+        "more text"
+    ],
+    [
+        "some text # comment with */ inlined\n"
+        "more text",
+
+        "some text \n"
+        "more text"
+    ]];
+
+    foreach (t; text) {
+        assert(equal(t[0].stripComments, t[1]),
+            "stripComments test failed. test:\n"~t[0]~"\nexpected:\n"~t[1]);
     }
 }
