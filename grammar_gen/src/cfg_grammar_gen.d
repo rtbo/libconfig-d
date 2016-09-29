@@ -2,17 +2,17 @@ module cfg_grammar_gen;
 
 enum configGrammar = r"
 Config:
-    Document    <   (Setting / Include / Comment)*
+    Document    <   Setting*
 
-    Setting     <   Name (':' / '=') Value (';' / ',')? Comment*
+    Setting     <   Name (':' / '=') Value (';' / ',')?
 
-    Value       <-  Comment* (Scalar / Array / List / Group) Comment*
-    Scalar      <-  Comment* (Bool / Float / Integer / String) Comment*    # Float MUST be before Integer
+    Value       <-  Scalar / Array / List / Group
+    Scalar      <-  Bool / Float / Integer / String    # Float MUST be before Integer
     Array       <   '[' ( Scalar (',' Scalar)* )? ']'
     List        <   '(' ( Value (',' Value)* )? ')'
     Group       <   '{' Setting* '}'
 
-    Name        <~  Comment* [A-Za-z] ( [-A-Za-z0-9_] )* Comment*
+    Name        <~  [A-Za-z] ( [-A-Za-z0-9_] )*
 
     Bool        <~  [Tt] [Rr] [Uu] [Ee] / [Ff] [Aa] [Ll] [Ss] [Ee]
 
@@ -32,16 +32,6 @@ Config:
                         backslash ^'t' /
                         !doublequote !backslash .
                     )* :doublequote
-
-    Include     <   :eol :'@include' :doublequote ~(
-                        backslash backslash /
-                        backslash doublequote /
-                        !doublequote !backslash .
-                    )* :doublequote :eol
-
-    Comment     <:  '/*' (!'/*' .)* '*/' /
-                    '//' (!eol .)* eol /
-                    '#' (!eol .)* eol
 ";
 
 int main(string[] args) {
