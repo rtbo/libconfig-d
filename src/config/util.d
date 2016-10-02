@@ -1,6 +1,6 @@
 module config.util;
 
-import std.range : isForwardRange, ElementType;
+import std.range : isInputRange, isForwardRange, ElementType;
 import std.traits : isSomeString, isSomeChar, Unqual;
 
 auto findSplitAmong(alias pred="a == b", R1, R2)(R1 seq, R2 choices)
@@ -111,7 +111,7 @@ unittest {
 
 /// strip libconfig comments on a char by char basis
 auto stripComments(R)(R input)
-if (isForwardRange!R && isSomeChar!(ElementType!R))
+if (isInputRange!R && isSomeChar!(ElementType!R))
 {
     import std.range.primitives;
 
@@ -202,7 +202,7 @@ if (isForwardRange!R && isSomeChar!(ElementType!R))
 
 /// strip libconfig comments on a line by line basis
 auto stripComments(R)(R input)
-if (isForwardRange!R && isSomeString!(ElementType!R))
+if (isInputRange!R && isSomeString!(ElementType!R))
 {
     import std.range.primitives;
     import std.stdio;
@@ -231,9 +231,12 @@ if (isForwardRange!R && isSomeString!(ElementType!R))
             _inBlock = inBlock;
         }
 
-        @property auto save()
+        static if (isForwardRange!R)
         {
-            return Result(_input.save, _buf.dup, _inBlock);
+            @property auto save()
+            {
+                return Result(_input.save, _buf.dup, _inBlock);
+            }
         }
 
         @property bool empty()
@@ -414,7 +417,7 @@ unittest {
 /// of directories includeDirs.
 /// input must be a range of lines (as given e.g. by std.string.lineSplitter)
 auto handleIncludeDirs(R)(R input, in string[] includeDirs=[])
-if (isForwardRange!R && isSomeString!(ElementType!R))
+if (isInputRange!R && isSomeString!(ElementType!R))
 {
     return HandleIncludeDirsResult!R(input, includeDirs);
 }
@@ -482,7 +485,14 @@ private class IncludeHandlerImpl(R) : IncludeHandler!(ElementType!R)
 
     @property IncludeHandler!StringT save()
     {
-        return new IncludeHandlerImpl!R(_input.save, _includeDirs, _dir ? _dir.save : null);
+        static if (isForwardRange!R)
+        {
+            return new IncludeHandlerImpl!R(_input.save, _includeDirs, _dir ? _dir.save : null);
+        }
+        else
+        {
+            assert(false, "not implementable with input of type "~R.stringof);
+        }
     }
 
     @property bool empty()
