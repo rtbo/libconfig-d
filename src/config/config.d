@@ -87,7 +87,7 @@ class Config
         return read(File(configFile, "r"), includeDirs);
     }
 
-
+    /// writes the configuration to a string
     override string toString()
     {
         import std.array : appender;
@@ -96,6 +96,7 @@ class Config
         return app.data;
     }
 
+    /// writes the configuration to the given output range
     void writeTo(O)(O writer)
     if (isOutputRange!O)
     {
