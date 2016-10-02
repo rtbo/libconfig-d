@@ -320,7 +320,7 @@ if (isForwardRange!R && isSomeString!(ElementType!R))
 
 
 
-
+///
 unittest {
     // couples of input and expected result
     immutable text = [[
@@ -409,6 +409,10 @@ unittest {
     }
 }
 
+/// Transforms the given input range by replacing lines that have @include directive
+/// with the content of the included file. Filenames are looked for in the list
+/// of directories includeDirs.
+/// input must be a range of lines (as given e.g. by std.string.lineSplitter)
 auto handleIncludeDirs(R)(R input, in string[] includeDirs=[])
 if (isForwardRange!R && isSomeString!(ElementType!R))
 {
@@ -533,10 +537,11 @@ private class IncludeHandlerImpl(R) : IncludeHandler!(ElementType!R)
             auto fname = m[1];
 
             assert(!_dir);
-            foreach(d; _includeDirs) {
-
+            foreach(d; _includeDirs)
+            {
                 auto fpath = chainPath(d, fname);
                 if (exists(fpath)) {
+                    // TODO: handle escaped chars in fname
                     auto content = cast(StringT)read(fpath);
                     _dir = makeIncludeHandler(content.lineSplitter, _includeDirs);
                 }
@@ -548,6 +553,7 @@ private class IncludeHandlerImpl(R) : IncludeHandler!(ElementType!R)
     }
 }
 
+///
 unittest
 {
     import std.file : write, readText, remove;
@@ -557,8 +563,21 @@ unittest
     }
     write("test.cfg", "name=12");
 
+    // couples of input and expected result
     auto text = [[
+        "foo=10\nbar:30",
+        "foo=10\nbar:30"
+    ],
+    [
         "foo=10\n  @include \"test.cfg\" \nbar:30",
+        "foo=10\nname=12\nbar:30"
+    ],
+    [
+        "foo=10\n@include\"test.cfg\"\nbar:30",
+        "foo=10\nname=12\nbar:30"
+    ],
+    [
+        "foo=10\n@include      \"test.cfg\"\nbar:30",
         "foo=10\nname=12\nbar:30"
     ]];
 
