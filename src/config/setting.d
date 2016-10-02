@@ -199,6 +199,11 @@ class AggregateSetting : Setting {
         return _children[idx];
     }
 
+    @property inout(Setting)[] children() inout
+    {
+        return _children;
+    }
+
     override bool remove(in size_t idx) {
         import std.algorithm : remove;
 
