@@ -417,11 +417,11 @@ if (isForwardRange!R && isSomeString!(ElementType!R))
 
 private struct HandleIncludeDirsResult(R)
 {
-    IncludeHandler!R hdler;
+    IncludeHandler!(ElementType!R) hdler;
 
     this (R input, string[] includeDirs)
     {
-        hdler = new IncludeHandler!R(input, includeDirs);
+        hdler = makeIncludeHandler(input, includeDirs);
     }
 
     @property bool empty()
@@ -438,7 +438,21 @@ private struct HandleIncludeDirsResult(R)
     }
 }
 
-private class IncludeHandler(R)
+private auto makeIncludeHandler(R) (R input, string[] includeDirs)
+{
+    alias StringT = typeof(input.front);
+    return cast(IncludeHandler!StringT)(new IncludeHandlerImpl!R(input, includeDirs));
+}
+
+private interface IncludeHandler(StringT)
+{
+    @property bool empty();
+    @property IncludeHandler!StringT save();
+    @property StringT front();
+    void popFront();
+}
+
+private class IncludeHandlerImpl(R) : IncludeHandler!(ElementType!R)
 {
     import std.range.primitives;
 
@@ -446,13 +460,25 @@ private class IncludeHandler(R)
 
     R _input;
     string[] _includeDirs;
-    IncludeHandler!R _dir;
+    IncludeHandler!StringT _dir;
 
 
     this (R input, string[] includeDirs)
     {
         _input = input;
         _includeDirs = includeDirs;
+    }
+
+    private this (R input, string[] includeDirs, IncludeHandler!StringT dir)
+    {
+        _input = input;
+        _includeDirs = includeDirs;
+        _dir = dir;
+    }
+
+    @property IncludeHandler!StringT save()
+    {
+        return new IncludeHandlerImpl!R(_input.save, _includeDirs, _dir ? _dir.save : null);
     }
 
     @property bool empty()
@@ -512,7 +538,7 @@ private class IncludeHandler(R)
                 auto fpath = chainPath(d, fname);
                 if (exists(fpath)) {
                     auto content = cast(StringT)read(fpath);
-                    _dir = new IncludeHandler!R(content.lineSplitter, _includeDirs);
+                    _dir = makeIncludeHandler(content.lineSplitter, _includeDirs);
                 }
             }
             if(!_dir) {
