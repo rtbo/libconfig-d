@@ -322,9 +322,6 @@ if (isForwardRange!R && isSomeString!(ElementType!R))
 
 
 unittest {
-    import std.algorithm : equal;
-    import std.stdio : writeln;
-
     // couples of input and expected result
     immutable text = [[
         "some text\n"
@@ -381,6 +378,7 @@ unittest {
     ]];
 
     foreach (t; text) {
+        import std.algorithm : equal;
         import std.format : format;
         import std.conv : to;
 
@@ -394,6 +392,7 @@ unittest {
     }
 
     foreach (t; text) {
+        import std.algorithm : equal;
         import std.string : lineSplitter;
         import std.format : format;
 
@@ -408,4 +407,151 @@ unittest {
             format("lineSplitter.stripComments test failed.\ninput:\n%s\nresult:\n%s\nexpected:\n%s\n",
                 input, result, expected));
     }
+}
+
+auto handleIncludeDirs(R)(R input, string[] includeDirs=[])
+if (isForwardRange!R && isSomeString!(ElementType!R))
+{
+    return HandleIncludeDirsResult!R(input, includeDirs);
+}
+
+private struct HandleIncludeDirsResult(R)
+{
+    IncludeHandler!R hdler;
+
+    this (R input, string[] includeDirs)
+    {
+        hdler = new IncludeHandler!R(input, includeDirs);
+    }
+
+    @property bool empty()
+    {
+        return hdler.empty;
+    }
+    @property auto front()
+    {
+        return hdler.front;
+    }
+    void popFront()
+    {
+        hdler.popFront();
+    }
+}
+
+private class IncludeHandler(R)
+{
+    import std.range.primitives;
+
+    alias StringT = ElementType!R;
+
+    R _input;
+    string[] _includeDirs;
+    IncludeHandler!R _dir;
+
+
+    this (R input, string[] includeDirs)
+    {
+        _input = input;
+        _includeDirs = includeDirs;
+    }
+
+    @property bool empty()
+    {
+        if (_dir) {
+            return _dir.empty && _input.empty;
+        }
+        else {
+            return _input.empty;
+        }
+    }
+
+    @property StringT front()
+    {
+        if (_dir && !_dir.empty) return _dir.front;
+        return _input.front;
+    }
+
+    void popFront()
+    {
+        if (_dir && !_dir.empty)
+        {
+            _dir.popFront();
+            if (_dir.empty) {
+                _dir = null;
+                if (!_input.empty) popFromInput();
+            }
+        }
+        else {
+            popFromInput();
+        }
+    }
+
+    private void popFromInput()
+    {
+        import std.algorithm : canFind;
+        import std.path : chainPath;
+        import std.file : exists, read;
+        import std.string : lineSplitter;
+        import std.regex : ctRegex, matchFirst;
+
+        _input.popFront();
+        if (_input.empty) return;
+        auto line = _input.front;
+        assert(!line.canFind('\n'), "handleIncludeDirs must be passed a line range");
+
+        auto re = ctRegex!("^\\s*@include\\s*\"(.*)\"\\s*$");
+        auto m = matchFirst(line, re);
+
+        if(m) {
+            assert(m.length >= 2);
+            auto fname = m[1];
+
+            assert(!_dir);
+            foreach(d; _includeDirs) {
+
+                auto fpath = chainPath(d, fname);
+                if (exists(fpath)) {
+                    auto content = cast(StringT)read(fpath);
+                    _dir = new IncludeHandler!R(content.lineSplitter, _includeDirs);
+                }
+            }
+            if(!_dir) {
+                throw new Exception("unresolved include directive: "~fname);
+            }
+        }
+    }
+}
+
+unittest
+{
+    import std.file : write, readText, remove;
+
+    scope(exit) {
+        remove("test.cfg");
+    }
+    write("test.cfg", "name=12");
+
+    auto text = [[
+        "foo=10\n  @include \"test.cfg\" \nbar:30",
+        "foo=10\nname=12\nbar:30"
+    ]];
+
+
+    foreach (t; text) {
+        import std.algorithm : equal;
+        import std.string : lineSplitter;
+        import std.format : format;
+
+        string [] input;
+        string [] result;
+        string [] expected;
+        foreach (s; t[0].lineSplitter) input ~= s;
+        foreach (s; t[0].lineSplitter.handleIncludeDirs(["."])) result ~= s;
+        foreach (s; t[1].lineSplitter) expected ~= s;
+
+        assert(equal(expected, result),
+            format("lineSplitter.handleIncludeDirs test failed.\ninput:\n%s\nresult:\n%s\nexpected:\n%s\n",
+                input, result, expected));
+    }
+
 }
