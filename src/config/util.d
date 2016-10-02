@@ -1,13 +1,11 @@
 module config.util;
 
-import std.range : isInputRange, isForwardRange, ElementType;
+import std.range.primitives;
 import std.traits : isSomeString, isSomeChar, Unqual;
 
 auto findSplitAmong(alias pred="a == b", R1, R2)(R1 seq, R2 choices)
 if (isForwardRange!R1 && isForwardRange!R2)
 {
-    import std.range.primitives;
-
     static struct Result(S1, S2, S3)
     if (isForwardRange!S1 && isForwardRange!S2 && isForwardRange!S3)
     {
@@ -113,12 +111,22 @@ unittest {
 auto stripComments(R)(R input)
 if (isInputRange!R && isSomeChar!(ElementType!R))
 {
-    import std.range.primitives;
-
     struct Result
     {
         R _input;
         ElementType!R[] _lookAhead;
+
+        this(R input)
+        {
+            _input = input;
+            check();
+        }
+
+        private this (R input, ElementType!R[] lookAhead)
+        {
+            _input = input;
+            _lookAhead = lookAhead;
+        }
 
         @property auto save()
         {
@@ -132,35 +140,35 @@ if (isInputRange!R && isSomeChar!(ElementType!R))
 
         @property auto ref front()
         {
-            if (_lookAhead.length) {
-                return _lookAhead[0];
-            }
-            else {
-                return _input.front;
-            }
+            if (_lookAhead.length) return _lookAhead[0];
+            else return _input.front;
         }
 
         void popFront()
         {
-            if (_lookAhead.length) {
-                _lookAhead = _lookAhead[1 .. $];
-                return;
-            }
-
-            _input.popFront();
-            if (_input.empty) return;
-
-            if (_input.front == '#') popUntilEol();
-
-            else if (_input.front == '/')
+            if (_lookAhead.empty)
             {
                 _input.popFront();
-                if (_input.empty) return;
+                check();
+            }
+            else _lookAhead = _lookAhead[1 .. $];
+        }
 
-                if (_input.front == '/') popUntilEol();
+        private void check()
+        {
+            assert(_lookAhead.empty);
+
+            if (_input.empty) return;
+            else if (_input.front == '#') popUntilEol();
+            else if (_input.front == '/')
+            {
+                immutable keep = _input.front;
+                _input.popFront();
+
+                if (_input.empty) _lookAhead = [keep];
+                else if (_input.front == '/') popUntilEol();
                 else if (_input.front == '*') popUntilEndBlock();
-
-                else _lookAhead ~= _input.front;
+                else _lookAhead = [keep];
             }
         }
 
@@ -195,7 +203,7 @@ if (isInputRange!R && isSomeChar!(ElementType!R))
         }
     }
 
-    return Result(input, []);
+    return Result(input);
 }
 
 
@@ -204,9 +212,6 @@ if (isInputRange!R && isSomeChar!(ElementType!R))
 auto stripComments(R)(R input)
 if (isInputRange!R && isSomeString!(ElementType!R))
 {
-    import std.range.primitives;
-    import std.stdio;
-
     alias StringT = ElementType!R;
     alias CharT = Unqual!(typeof(StringT.init[0]));
 
@@ -235,23 +240,23 @@ if (isInputRange!R && isSomeString!(ElementType!R))
         {
             @property auto save()
             {
-                return Result(_input.save, _buf.dup, _inBlock);
+                return Result(_input.save, (_buf is null) ? null : _buf.dup, _inBlock);
             }
         }
 
         @property bool empty()
         {
-            return _buf.empty && _input.empty;
+            return _buf is null;
         }
 
         @property auto front()
         {
-            return _buf.empty ? _input.front : _buf;
+            return _buf;
         }
 
         void popFront()
         {
-            _buf = [];
+            _buf = null;
             if (!_input.empty) {
                 _input.popFront();
                 fetch();
@@ -334,6 +339,24 @@ unittest {
         "more text"
     ],
     [
+        "// start with comments\n"
+        "some text // other comment\n"
+        "more text",
+
+        "\n"
+        "some text \n"
+        "more text"
+    ],
+    [
+        "/ almost a comment but text\n"
+        "some text // an actual comment\n"
+        "more text",
+
+        "/ almost a comment but text\n"
+        "some text \n"
+        "more text"
+    ],
+    [
         "some text // comment\n"
         "more text",
 
@@ -389,9 +412,10 @@ unittest {
         string result = t[0].stripComments().to!string;
         string expected = t[1];
 
-        assert(equal(expected, result),
-            format("stripComments test failed.\ninput:\n%s\nresult:\n%s\nexpected:\n%s\n",
-                input, result, expected));
+        assert(equal(expected, result), format(
+            "stripComments test failed.\ninput:\n%s\nresult:\n%s\nexpected:\n%s\n",
+            input, result, expected
+        ));
     }
 
     foreach (t; text) {
@@ -406,9 +430,10 @@ unittest {
         foreach (s; t[0].lineSplitter.stripComments) result ~= s;
         foreach (s; t[1].lineSplitter) expected ~= s;
 
-        assert(equal(expected, result),
-            format("lineSplitter.stripComments test failed.\ninput:\n%s\nresult:\n%s\nexpected:\n%s\n",
-                input, result, expected));
+        assert(equal(expected, result), format(
+            "lineSplitter.stripComments test failed.\ninput:\n%s\nresult:\n%s\nexpected:\n%s\n",
+            input, result, expected
+        ));
     }
 }
 
