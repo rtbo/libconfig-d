@@ -27,7 +27,7 @@ Config:
     Float       <~  ( [-+]? digit* ^'.' digit* ( [eE] [-+]? digits )? ) /
                     ( [-+]? digit+ (^'.' digit*)? [eE] [-+]? digits )
 
-    String      <~  :doublequote (
+    StringQuot  <~  :doublequote (
                         backslash backslash /
                         backslash doublequote /
                         backslash ^'f' /
@@ -36,6 +36,8 @@ Config:
                         backslash ^'t' /
                         !doublequote !backslash .
                     )* :doublequote
+
+    String      <~  (StringQuot spacing?)+
 ";
 
 int main(string[] args) {
