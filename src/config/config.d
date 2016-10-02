@@ -78,21 +78,30 @@ class Config {
 }
 
 
-struct ConfigParser {
+
+struct ConfigReader {
     import cg = config.grammar;
 
-    static Config read(string config) {
+    static Config read(in string configStr, string[] includeDirs=[]) {
+        import std.string : lineSplitter;
+        import std.array : join;
+        import config.util : stripComments, handleIncludeDirs;
 
         auto conf = new Config;
+        immutable config = configStr
+                .lineSplitter
+                .stripComments
+                .handleIncludeDirs(includeDirs)
+                .join(lineSep);
+
         auto mainTree = cg.Config(config);
         assert(mainTree.children.length == 1);
         assert(mainTree.children[0].name == "Document");
         auto docTree = mainTree.children[0];
 
         foreach (pt; docTree.children) {
-            if (pt.name == "Setting") {
-                conf.root.addChild(parseSetting(conf, conf.root, pt));
-            }
+            assert(pt.name == "Setting");
+            conf.root.addChild(parseSetting(conf, conf.root, pt));
         }
 
         return conf;
@@ -222,6 +231,14 @@ struct ConfigParser {
 
 
 package enum pathTok = ".:/";
+version(Windows)
+{
+    package enum lineSep = "\r\n";
+}
+else
+{
+    package enum lineSep = "\n";
+}
 
 unittest {
     import cg = config.grammar;
@@ -231,5 +248,5 @@ unittest {
         "name = ( true, 0xDEADBEEF, 343, 0.656 )\n"
     );
     //auto c = cg.Config("name = 0xDEADBEEF");
-    writeln(c);
+    //writeln(c);
 }
