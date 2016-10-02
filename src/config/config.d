@@ -82,6 +82,11 @@ class Config
         return Parser.readConfig(config);
     }
 
+    /// read from configuration residing in configFile
+    static Config readFile(in string configFile, string[] includeDirs=[]) {
+        return read(File(configFile, "r"), includeDirs);
+    }
+
 
     override string toString()
     {
@@ -157,6 +162,7 @@ class Config
                     string name = pt.children[0].matches[0];
                     return parseValue(conf, par, name, pt.children[1]);
                 }
+
 
                 static Setting parseValue(Config conf, AggregateSetting par, string name, cg.ParseTree valTree) {
                     assert(valTree.name == "Config.Value");
@@ -442,13 +448,18 @@ package enum pathTok = ".:/";
 
 version(unittest)
 {
-    enum testFiles = [
+    immutable testFiles = [
         [ import("input_0.cfg"), import("output_0.cfg") ],
         [ import("input_1.cfg"), import("output_1.cfg") ],
         [ import("input_2.cfg"), import("output_2.cfg") ],
         [ import("input_3.cfg"), import("output_3.cfg") ],
         [ import("input_4.cfg"), import("output_4.cfg") ],
         [ import("input_5.cfg"), import("output_5.cfg") ],
+    ];
+
+    immutable testErrFiles = [
+        [ import("bad_input_0.cfg"), import("parse_error_0.txt") ],
+        [ import("bad_input_1.cfg"), import("parse_error_1.txt") ],
     ];
 
 
@@ -464,20 +475,35 @@ version(unittest)
         ));
     }
 
+    void parseFileAndCompare(string input, string expected)
+    {
+        import std.format : format;
+        import std.file : write, remove;
+
+        scope(exit) remove("input.cfg");
+        write("input.cfg", input);
+
+        auto conf = Config.readFile("input.cfg", ["."]);
+        auto res = conf.toString();
+        assert(expected == res, format(
+            "parseAndCompare failed.\ninput:\n%s\nresult:\n%s\nexpected:\n%s\n",
+            input, res, expected
+        ));
+    }
+
 
     unittest {
         import std.file : write, remove;
 
-        scope(exit)
-        {
-            remove("more.cfg");
-        }
+        scope(exit) remove("more.cfg");
         write("more.cfg", import("more.cfg"));
 
         foreach (tf; testFiles)
         {
             parseAndCompare(tf[0], tf[1]);
         }
+
+        parseFileAndCompare(testFiles[2][0], testFiles[2][1]);
     }
 }
 
