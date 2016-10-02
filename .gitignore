@@ -8,6 +8,9 @@ __test__library__
 *.lib
 *.exe
 
+# vscode
+.vscode/*
+
 # libconfig-d
 grammar_gen/cfg_grammar_gen
 src/config/grammar.d
