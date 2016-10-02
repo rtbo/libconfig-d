@@ -486,13 +486,12 @@ private interface IncludeHandler(StringT)
 
 private class IncludeHandlerImpl(R) : IncludeHandler!(ElementType!R)
 {
-    import std.range.primitives;
-
     alias StringT = ElementType!R;
 
     R _input;
     const(string[]) _includeDirs;
     IncludeHandler!StringT _dir;
+    bool _fstCheck;
 
 
     this (R input, in string[] includeDirs)
@@ -501,18 +500,19 @@ private class IncludeHandlerImpl(R) : IncludeHandler!(ElementType!R)
         _includeDirs = includeDirs;
     }
 
-    private this (R input, in string[] includeDirs, IncludeHandler!StringT dir)
+    private this (R input, in string[] includeDirs, IncludeHandler!StringT dir, bool fstCheck)
     {
         _input = input;
         _includeDirs = includeDirs;
         _dir = dir;
+        _fstCheck = fstCheck;
     }
 
     @property IncludeHandler!StringT save()
     {
         static if (isForwardRange!R)
         {
-            return new IncludeHandlerImpl!R(_input.save, _includeDirs, _dir ? _dir.save : null);
+            return new IncludeHandlerImpl!R(_input.save, _includeDirs, _dir ? _dir.save : null, _fstCheck);
         }
         else
         {
@@ -532,6 +532,7 @@ private class IncludeHandlerImpl(R) : IncludeHandler!(ElementType!R)
 
     @property StringT front()
     {
+        if (!_fstCheck) check();
         if (_dir && !_dir.empty) return _dir.front;
         return _input.front;
     }
@@ -543,15 +544,20 @@ private class IncludeHandlerImpl(R) : IncludeHandler!(ElementType!R)
             _dir.popFront();
             if (_dir.empty) {
                 _dir = null;
-                if (!_input.empty) popFromInput();
+                if (!_input.empty)
+                {
+                    _input.popFront();
+                    check();
+                }
             }
         }
         else {
-            popFromInput();
+            _input.popFront();
+            check();
         }
     }
 
-    private void popFromInput()
+    private void check()
     {
         import std.algorithm : canFind;
         import std.path : chainPath;
@@ -559,7 +565,8 @@ private class IncludeHandlerImpl(R) : IncludeHandler!(ElementType!R)
         import std.string : lineSplitter;
         import std.regex : ctRegex, matchFirst;
 
-        _input.popFront();
+        _fstCheck = true;
+
         if (_input.empty) return;
         auto line = _input.front;
         assert(!line.canFind('\n'), "handleIncludeDirs must be passed a line range");
@@ -602,6 +609,10 @@ unittest
     auto text = [[
         "foo=10\nbar:30",
         "foo=10\nbar:30"
+    ],
+    [
+        "@include \"test.cfg\"",
+        "name=12"
     ],
     [
         "foo=10\n  @include \"test.cfg\" \nbar:30",
