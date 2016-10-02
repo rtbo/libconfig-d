@@ -409,7 +409,7 @@ unittest {
     }
 }
 
-auto handleIncludeDirs(R)(R input, string[] includeDirs=[])
+auto handleIncludeDirs(R)(R input, in string[] includeDirs=[])
 if (isForwardRange!R && isSomeString!(ElementType!R))
 {
     return HandleIncludeDirsResult!R(input, includeDirs);
@@ -419,7 +419,7 @@ private struct HandleIncludeDirsResult(R)
 {
     IncludeHandler!(ElementType!R) hdler;
 
-    this (R input, string[] includeDirs)
+    this (R input, in string[] includeDirs)
     {
         hdler = makeIncludeHandler(input, includeDirs);
     }
@@ -438,7 +438,7 @@ private struct HandleIncludeDirsResult(R)
     }
 }
 
-private auto makeIncludeHandler(R) (R input, string[] includeDirs)
+private auto makeIncludeHandler(R) (R input, in string[] includeDirs)
 {
     alias StringT = typeof(input.front);
     return cast(IncludeHandler!StringT)(new IncludeHandlerImpl!R(input, includeDirs));
@@ -459,17 +459,17 @@ private class IncludeHandlerImpl(R) : IncludeHandler!(ElementType!R)
     alias StringT = ElementType!R;
 
     R _input;
-    string[] _includeDirs;
+    const(string[]) _includeDirs;
     IncludeHandler!StringT _dir;
 
 
-    this (R input, string[] includeDirs)
+    this (R input, in string[] includeDirs)
     {
         _input = input;
         _includeDirs = includeDirs;
     }
 
-    private this (R input, string[] includeDirs, IncludeHandler!StringT dir)
+    private this (R input, in string[] includeDirs, IncludeHandler!StringT dir)
     {
         _input = input;
         _includeDirs = includeDirs;
