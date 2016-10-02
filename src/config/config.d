@@ -99,7 +99,7 @@ class Config
     void writeTo(O)(O writer)
     if (isOutputRange!O)
     {
-        Write.writeSetting(writer, root, 0);
+        Writer.writeSetting(writer, root, 0);
     }
 
     package {
