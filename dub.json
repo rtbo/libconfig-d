@@ -9,6 +9,9 @@
 	"dependencies": {
 		"pegged" : "~>0.3.2"
 	},
+	"stringImportPaths": [
+		"testdata"
+	],
 	"preGenerateCommands": [
 		"cd $PACKAGE_DIR/grammar_gen && dub run -- -m config.grammar -o $PACKAGE_DIR/src/config/grammar"
 	]
