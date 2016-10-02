@@ -1,6 +1,10 @@
 module cfg_grammar_gen;
 
+/// PEG grammar for libconfig
 enum configGrammar = r"
+# Comments and include directive are not part of this grammar.
+# They must be handled before the input is given to the PEG parser
+
 Config:
     Document    <   Setting*
 
