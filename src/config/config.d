@@ -1,6 +1,6 @@
 module config.config;
 
-import std.typecons : BitFlags;
+import std.typecons : BitFlags, Nullable;
 import std.range : isOutputRange;
 
 import config.setting;
@@ -35,6 +35,16 @@ class Config
     }
 
     @property inout(GroupSetting) root() inout { return _root; }
+
+    inout(Setting) lookUp(in string name) inout
+    {
+        return root.lookUp(name);
+    }
+
+    Nullable!T lookUpValue(T)(in string name) const
+    {
+        return root.lookUpValue!T(name);
+    }
 
     @property BitFlags!Option options() const { return _options; }
     @property void options(BitFlags!Option options) { _options = options; }
