@@ -14,3 +14,4 @@ __test__library__
 # libconfig-d
 grammar_gen/cfg_grammar_gen
 src/config/grammar.d
+examples/example1/libconfig-d_example1
