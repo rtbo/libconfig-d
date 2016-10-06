@@ -170,6 +170,7 @@ class ScalarSetting : Setting {
     @property T value(T)() const if (isScalarCandidate!T)
     {
         import std.exception : enforce;
+        import std.conv : to;
 
         static if (isIntegral!T)
         {
@@ -177,7 +178,7 @@ class ScalarSetting : Setting {
             static if (!is(T == long) && T.sizeof<=long.sizeof)
             {
                 enforce(val >= T.min && val <= T.max,
-                        "cannot cast "~val.stringof~" to "~T.stringof);
+                        "cannot cast "~val.to!string~" to "~T.stringof);
             }
             return cast(T)val;
         }
@@ -187,7 +188,7 @@ class ScalarSetting : Setting {
             static if (!is(T == double) && T.sizeof<double.sizeof) // should be float unless a half type pops up
             {
                 enforce(val >= -T.max && val <= T.max,
-                        "cannot cast "~val.stringof~" to "~T.stringof);
+                        "cannot cast "~val.to!string~" to "~T.stringof);
             }
             return cast(T)val;
         }
@@ -196,9 +197,10 @@ class ScalarSetting : Setting {
             import std.conv : to;
             return (_value.get!string).to!T;
         }
-        else {
+        else static if (is(T == bool)) {
             return _value.get!T;
         }
+        else static assert (false);
     }
 
     @property void value(T)(T val) if (isScalarCandidate!T) {
