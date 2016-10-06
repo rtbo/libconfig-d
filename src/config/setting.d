@@ -78,18 +78,19 @@ abstract class Setting {
 
     inout(Setting) child(in size_t idx) inout { return null; }
     inout(Setting) child(in string name) inout { return null; }
+    @property inout(Setting)[] children() inout { return []; }
+
     bool remove(in size_t idx) { return false; }
     bool remove(in string path) { return false; }
-    inout(Setting) lookUp(in string path) inout { return null; }
 
-    bool lookUpValue(T)(in string path, ref T value) const {
+    inout(Setting) lookUp(in string path) inout { return null; }
+    Nullable!T lookUpValue(T)(in string path) const {
         if (auto s = lookUp(path)) {
             if (auto ss = s.asScalar) {
-                value = ss.value!T;
-                return true;
+                return Nullable!T(ss.value!T);
             }
         }
-        return false;
+        return Nullable!T.init;
     }
 
     @property size_t index() const {
@@ -166,8 +167,38 @@ abstract class Setting {
 /// Setting that holds a scalar value that can be one of Bool, Float, Integer or String
 class ScalarSetting : Setting {
 
-    @property T value(T)() const if (isScalarCandidate!T) {
-        return _value.get!T;
+    @property T value(T)() const if (isScalarCandidate!T)
+    {
+        import std.exception : enforce;
+
+        static if (isIntegral!T)
+        {
+            auto val = _value.get!long;
+            static if (!is(T == long) && T.sizeof<=long.sizeof)
+            {
+                enforce(val >= T.min && val <= T.max,
+                        "cannot cast "~val.stringof~" to "~T.stringof);
+            }
+            return cast(T)val;
+        }
+        else static if (isFloatingPoint!T)
+        {
+            auto val = _value.get!double;
+            static if (!is(T == double) && T.sizeof<double.sizeof) // should be float unless a half type pops up
+            {
+                enforce(val >= -T.max && val <= T.max,
+                        "cannot cast "~val.stringof~" to "~T.stringof);
+            }
+            return cast(T)val;
+        }
+        else static if (isSomeString!T)
+        {
+            import std.conv : to;
+            return (_value.get!string).to!T;
+        }
+        else {
+            return _value.get!T;
+        }
     }
 
     @property void value(T)(T val) if (isScalarCandidate!T) {
@@ -194,12 +225,23 @@ class ScalarSetting : Setting {
 class AggregateSetting : Setting {
 
 
-    override inout(Setting) child(in size_t idx) inout {
+    override inout(Setting) child(in size_t idx) inout
+    {
         if (idx >= _children.length) return null;
         return _children[idx];
     }
 
-    @property inout(Setting)[] children() inout
+    override inout(Setting) child(in string name) inout
+    {
+        import std.exception : enforce;
+        enforce(type == Type.Group, "only GroupSetting can have named children");
+        foreach (c; _children) {
+            if (c.name == name) return c;
+        }
+        return null;
+    }
+
+    override @property inout(Setting)[] children() inout
     {
         return _children;
     }
@@ -243,11 +285,9 @@ class AggregateSetting : Setting {
         if (name.empty) return this;
 
         immutable split = name.findSplitAmong(pathTok);
-
         auto s = getChild(split[0]);
-
         if (!split[2].empty && s) return s.lookUp(split[2]);
-        return s;
+        else return s;
     }
 
     package {
@@ -270,7 +310,7 @@ class AggregateSetting : Setting {
         void setChildren(Setting[] children) {
             import std.algorithm : map, all;
             assert(children.map!(c => c.config).all!(cf => cf == config));
-            assert(children.map!(c => c.parent).all!(p => p == parent));
+            assert(children.map!(c => c.parent).all!(p => p == this));
             debug {
                 if (type == Type.Group) {
                     bool[string] seen;
@@ -300,7 +340,7 @@ class AggregateSetting : Setting {
 
             auto square = find(name, '[');
             auto childName = name[0 .. $-square.length];
-            auto child = super.child(childName);
+            auto child = child(childName);
 
             if (square.empty) return child;
 
@@ -349,13 +389,6 @@ class ListSetting : AggregateSetting {
 
 
 class GroupSetting : AggregateSetting {
-
-    override inout(Setting) child(in string name) inout {
-        foreach (c; _children) {
-            if (c.name == name) return c;
-        }
-        return null;
-    }
 
     Setting add(string name, Type type) {
         import std.exception : enforce;
