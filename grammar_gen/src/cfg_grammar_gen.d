@@ -6,7 +6,7 @@ enum configGrammar = r"
 # They must be handled before the input is given to the PEG parser
 
 Config:
-    Document    <   Setting*
+    Document    <   eoi / Setting+
 
     Setting     <   Name (':' / '=') Value (';' / ',')?
 
