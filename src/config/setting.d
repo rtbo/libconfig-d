@@ -261,7 +261,7 @@ class AggregateSetting : Setting {
         import config.util : findSplitAmong;
         import std.range : empty;
 
-        if (name.empty) return false;
+        if (path.empty) return false;
 
         immutable split = path.findSplitAmong(pathTok);
 
