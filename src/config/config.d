@@ -386,7 +386,7 @@ class Config
                     case Type.Float: {
                         import std.uni : toLower;
                         import std.algorithm : canFind;
-                        string fval = format("%*f", setting.config.floatPrecision, setting.value!double);
+                        string fval = format("%.*f", setting.config.floatPrecision, setting.value!double);
                         if (!fval.canFind('.') && !fval.toLower.canFind('e')) fval ~= ".0";
                         put(output, fval);
                         break;
