@@ -76,6 +76,11 @@ class Config
         return root.lookUpValue!T(name);
     }
 
+    bool remove(in string path)
+    {
+        return root.remove(path);
+    }
+
     @property BitFlags!Option options() const { return _options; }
     @property void options(BitFlags!Option options) { _options = options; }
 
