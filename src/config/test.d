@@ -157,3 +157,15 @@ unittest
     assert(sl.get == val);
 }
 
+unittest
+{
+    import std.format : format;
+
+    immutable val = 52;
+    immutable confStr = format("someint = %s", val);
+    const conf = Config.readString(confStr);
+    immutable sf = conf.lookUpValue!float("someint");
+    assert(!sf.isNull);
+    assert(sf.get == val);
+}
+
