@@ -175,23 +175,17 @@ class Config
         {
             import cg = config.grammar;
 
-            static void checkPT(cg.ParseTree pt)
-            {
-                if (!pt.successful) {
-                    throw new Exception("libconfig-d: error while parsing: "~pt.failMsg());
-                }
-            }
-
             static Config readConfig(in string config)
             {
+                import std.exception : enforce;
+
                 auto conf = new Config;
                 auto mainTree = cg.Config(config);
-                checkPT(mainTree);
+                enforce(mainTree.successful, new InvalidConfigInput(config, mainTree.failMsg));
 
                 assert(mainTree.children.length == 1);
                 assert(mainTree.children[0].name == "Config.Document");
                 auto docTree = mainTree.children[0];
-                checkPT(docTree);
 
                 foreach (pt; docTree.children) {
                     assert(pt.name == "Config.Setting");
@@ -204,14 +198,12 @@ class Config
             static Setting parseSetting(Config conf, AggregateSetting par, cg.ParseTree pt)
             {
                 assert(pt.name == "Config.Setting");
-                checkPT(pt);
 
                 // assertions enforced by grammar
                 assert(pt.children.length == 2);
                 assert(pt.children[0].name == "Config.Name");
                 assert(pt.children[1].name == "Config.Value");
 
-                checkPT(pt.children[0]);
                 string name = pt.children[0].matches[0];
                 return parseValue(conf, par, name, pt.children[1]);
             }
@@ -220,7 +212,7 @@ class Config
             static Setting parseValue(Config conf, AggregateSetting par, string name, cg.ParseTree valTree)
             {
                 assert(valTree.name == "Config.Value");
-                checkPT(valTree);
+
                 valTree = valTree.children[0];
                 switch (valTree.name) {
                     case "Config.Scalar":
@@ -259,7 +251,6 @@ class Config
             static Setting parseScalar(Config conf, AggregateSetting par, string name, cg.ParseTree scalTree)
             {
                 assert(scalTree.name == "Config.Scalar");
-                checkPT(scalTree);
 
                 switch (scalTree.children[0].name) {
                     case "Config.Bool": {
@@ -320,7 +311,10 @@ class Config
                 int seenFl;
                 children.each!(c => seenFl |= seen(c.type));
 
-                enforce(seenFl == seenBool || seenFl == seenString || seenFl & (seenInt | seenFloat));
+                enforce(
+                    seenFl == seenBool || seenFl == seenString || seenFl & (seenInt | seenFloat),
+                    new InconsistentConfigState("Array with different types")
+                );
                 if ((seenFl & seenInt)==seenInt && (seenFl & seenFloat)==seenFloat) {
                     // mix of float and ints, convert all ints to float
                     foreach(ref c; children) {
