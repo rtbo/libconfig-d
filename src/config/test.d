@@ -13,12 +13,6 @@ immutable testFiles = [
     [ import("input_5.cfg"), import("output_5.cfg") ],
 ];
 
-immutable testErrFiles = [
-    [ import("bad_input_0.cfg"), import("parse_error_0.txt") ],
-    [ import("bad_input_1.cfg"), import("parse_error_1.txt") ],
-];
-
-
 void parseAndCompare(string input, string expected)
 {
     import std.format : format;
@@ -47,18 +41,6 @@ void parseFileAndCompare(string input, string expected)
     ));
 }
 
-void parseErrAndCompare(string input, string expectedMsg)
-{
-    import std.exception : collectException;
-    import std.stdio : writeln;
-
-    writeln(input);
-
-    auto e = collectException(Config.readString(input, ["."]));
-    assert(e !is null);
-    writeln(e.msg);
-}
-
 
 unittest
 {
@@ -77,12 +59,10 @@ unittest
 
 unittest
 {
-    foreach (tf; testErrFiles)
-    {
-        // this do not pass at the moment
-        // as cannot retrieve errors from Pegged
-        //parseErrAndCompare(tf[0], tf[1]);
-    }
+    import std.exception : assertThrown;
+
+    assertThrown!InvalidConfigInput(Config.readString(import("bad_input_0.cfg")));
+    assertThrown!InconsistentConfigState(Config.readString(import("bad_input_1.cfg")));
 }
 
 unittest
@@ -169,3 +149,18 @@ unittest
     assert(sf.get == val);
 }
 
+unittest
+{
+    auto conf = Config.readString("a:{b:3;c:4;}");
+
+    assert(conf.lookUp("a"));
+    assert(conf.lookUp("a.b"));
+    assert(conf.lookUp("a.c"));
+
+    assert(conf.remove("a.c"));
+    assert(!conf.remove("a.c"));
+
+    assert(conf.lookUp("a"));
+    assert(conf.lookUp("a.b"));
+    assert(!conf.lookUp("a.c"));
+}
