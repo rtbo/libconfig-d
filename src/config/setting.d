@@ -167,7 +167,8 @@ abstract class Setting {
 /// Setting that holds a scalar value that can be one of Bool, Float, Integer or String
 class ScalarSetting : Setting {
 
-    @property T value(T)() const if (isScalarCandidate!T)
+    @property T value(T)() const
+    if (isScalarCandidate!T)
     {
         import std.exception : enforce;
         import std.conv : to;
@@ -187,7 +188,8 @@ class ScalarSetting : Setting {
             auto val = _value.get!double;
             static if (!is(T == double) && T.sizeof<double.sizeof) // should be float unless a half type pops up
             {
-                enforce(val >= -T.max && val <= T.max,
+                import std.math : abs;
+                enforce(abs(val) >= T.min_normal && abs(val) <= T.max,
                         "cannot cast "~val.to!string~" to "~T.stringof);
             }
             return cast(T)val;
@@ -203,9 +205,39 @@ class ScalarSetting : Setting {
         else static assert (false);
     }
 
-    @property void value(T)(T val) if (isScalarCandidate!T) {
+    @property void value(T)(T val)
+    if (isScalarCandidate!T)
+    {
         _type = scalarType!T;
-        _value = val;
+        static if (isIntegral!T)
+        {
+            static if (!is(T == long) && T.sizeof>=long.sizeof)
+            {
+                enforce(val >= long.min && val <= long.max,
+                        "cannot cast "~val.to!string~" to long");
+            }
+            _value = cast(long)val;
+        }
+        else static if (isFloatingPoint!T)
+        {
+            static if (T.sizeof>double.sizeof)
+            {
+                import std.math : abs;
+                enforce(abs(val) >= double.min_normal && abs(val) <= double.max,
+                        "cannot cast "~val.to!string~" to double");
+            }
+            _value = cast(double)val;
+        }
+        else static if (isSomeString!T)
+        {
+            import std.conv : to;
+            _value = val.to!string;
+        }
+        else static if (is(T == bool))
+        {
+            _value = val;
+        }
+        else static assert(false);
     }
 
 
