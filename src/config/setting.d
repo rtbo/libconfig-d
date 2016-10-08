@@ -1,6 +1,6 @@
 module config.setting;
 
-import config.config : Config;
+import config.config : Config, InconsistentConfigState;
 
 import std.traits : isIntegral, isFloatingPoint, isSomeString;
 import std.typecons : Nullable;
@@ -311,17 +311,20 @@ class AggregateSetting : Setting {
 
         void setChildren(Setting[] children) {
             import std.algorithm : map, all;
+            import std.exception : enforce;
             assert(children.map!(c => c.config).all!(cf => cf == config));
             assert(children.map!(c => c.parent).all!(p => p == this));
-            debug {
-                if (type == Type.Group) {
-                    bool[string] seen;
-                    foreach (c; children) {
-                        assert(!(c.name in seen));
-                        seen[c.name] = true;
-                    }
+
+            if (type == Type.Group) {
+                bool[string] seen;
+                foreach (c; children) {
+                    enforce(!(c.name in seen),
+                            new InconsistentConfigState("more than one child named \""~c.name~
+                            "\" in GroupSetting \""~name~"\""));
+                    seen[c.name] = true;
                 }
             }
+
             _children = children;
         }
     }
