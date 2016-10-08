@@ -1,7 +1,7 @@
-module example1;
+module readconfig;
 
 import std.stdio;
-import config.config;
+import config;
 
 void main()
 {
