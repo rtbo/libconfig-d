@@ -143,7 +143,7 @@ class Config
 
     /// writes the configuration to the given output range
     void writeTo(O)(O writer)
-    if (isOutputRange!O)
+    if (isOutputRange!(O, char))
     {
         Writer.writeSetting(writer, root, 0);
     }
