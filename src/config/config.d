@@ -15,6 +15,36 @@ enum Option {
     OpenBraceOnSeparateLine     = 0x10,
 }
 
+class ConfigException : Exception
+{
+    this(in string msg)
+    {
+        super(msg);
+    }
+}
+
+
+class InvalidConfigInput : ConfigException
+{
+    this(in string input, in string errorMsg)
+    {
+        this.input = input;
+        this.errorMsg = errorMsg;
+        super("Invalid config input. Error:\n"~errorMsg~"\nInput:\n"~prependLineNumbers(input));
+    }
+
+    string input;
+    string errorMsg;
+}
+
+class InconsistentConfigState : ConfigException
+{
+    this(in string msg)
+    {
+        super(msg);
+    }
+}
+
 /// Main Config class
 class Config
 {
@@ -478,3 +508,19 @@ class Config
 
 
 package enum pathTok = ".:/";
+
+
+
+private string prependLineNumbers(string text) {
+    import std.string : splitLines, KeepTerminator;
+    import std.format : format;
+    import std.math : log10;
+
+    auto lines = text.splitLines(KeepTerminator.yes);
+    immutable width = 1 + cast(int)log10(lines.length);
+    string res;
+    foreach(i, l; lines) {
+        res ~= format("%*s. %s", width, i+1, l);
+    }
+    return res;
+}
