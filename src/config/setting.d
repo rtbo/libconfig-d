@@ -66,6 +66,26 @@ if (isScalarCandidate!T)
     return type == Type.Int || type == Type.Float;
 }
 
+template TypedSetting(Type type)
+{
+    static if (type == Type.Bool || type == Type.Int || type == Type.Float || type == Type.String)
+    {
+        alias TypedSetting = ScalarSetting;
+    }
+    else static if (type == Type.Array)
+    {
+        alias TypedSetting = ArraySetting;
+    }
+    else static if (type == Type.List)
+    {
+        alias TypedSetting = ListSetting;
+    }
+    else static if (type == Type.Group)
+    {
+        alias TypedSetting = GroupSetting;
+    }
+    else static assert(false);
+}
 
 /// Setting type. Has a name and value which can be of any of Type
 abstract class Setting {
@@ -132,6 +152,9 @@ abstract class Setting {
     }
     @property auto asGroup() inout {
         return cast(GroupSetting)this;
+    }
+    @property auto as(Type t)() inout {
+        return cast(TypedSetting!t)this;
     }
 
     @property IntegerFormat integerFormat() const {
@@ -403,6 +426,26 @@ class ArraySetting : AggregateSetting {
         return addChild("", type);
     }
 
+    auto add(Type type)() {
+        import std.exception : enforce;
+        static assert(type.isScalar);
+        enforce(_children.length == 0 || _children[0].type == type);
+
+        return cast(TypedSetting!type)addChild("", type);
+    }
+
+    ScalarSetting addScalar(T)(in T value)
+    if (isScalarCandidate!T)
+    {
+        import std.exception : enforce;
+        immutable type = scalarType!T;
+        enforce(_children.length == 0 || _children[0].type == type);
+
+        auto ss = cast(ScalarSetting)addChild("", type);
+        ss.value = value;
+        return ss;
+    }
+
     package {
         this(Config config, AggregateSetting parent, string name) {
             super(config, parent, name, Type.Array);
@@ -417,6 +460,19 @@ class ListSetting : AggregateSetting {
         return addChild("", type);
     }
 
+    auto add(Type type)()
+    {
+        return cast(TypedSetting!type)addChild("", type);
+    }
+
+    ScalarSetting addScalar(T)(in T value)
+    if (isScalarCandidate!T)
+    {
+        auto ss = cast(ScalarSetting)addChild("", scalarType!T);
+        ss.value = value;
+        return ss;
+    }
+
     package {
         this(Config config, AggregateSetting parent, string name) {
             super(config, parent, name, Type.List);
@@ -427,11 +483,31 @@ class ListSetting : AggregateSetting {
 
 class GroupSetting : AggregateSetting {
 
-    Setting add(string name, Type type) {
+    Setting add(in string name, in Type type) {
         import std.exception : enforce;
         enforce(validateName(name));
         enforce(!child(name));
         return addChild(name, type);
+    }
+
+    auto add(Type type)(in string name)
+    {
+        import std.exception : enforce;
+        enforce(validateName(name));
+        enforce(!child(name));
+        return cast(TypedSetting!type)addChild(name, type);
+    }
+
+    ScalarSetting addScalar(T)(in string name, in T value)
+    if (isScalarCandidate!T)
+    {
+        import std.exception : enforce;
+        enforce(validateName(name));
+        enforce(!child(name));
+
+        auto ss = cast(ScalarSetting)addChild(name, scalarType!T);
+        ss.value = value;
+        return ss;
     }
 
     package {
