@@ -1,11 +1,9 @@
 {
 	"name": "libconfig-d",
-	"authors": [
-		"Remi Thebault"
-	],
+	"authors": [ "Remi Thebault" ],
 	"description": "D library for processing configuration files",
 	"copyright": "Copyright © 2016, Remi Thebault",
-	"license": "MIT",
+	"license": "BSD/LDC",
 	"dependencies": {
 		"pegged" : "~>0.3.2"
 	},
