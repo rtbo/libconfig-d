@@ -28,23 +28,21 @@ int main()
 
 	// fetch and read nodes
 	auto books = conf.lookUp("inventory.books").asList;
-	if (books)
-	{
-		writeln("Available books in inventory:");
-		writefln("%-30s  %-30s   %-6s  %s", "TITLE", "AUTHOR", "PRICE", "QTY");
-		foreach (book; books.children)
-		{
-			auto title = book.lookUpValue!string("title");
-			auto author = book.lookUpValue!string("author");
-			auto price = book.lookUpValue!float("price");
-			auto qty = book.lookUpValue!int("qty");
-			if (!title.isNull && !author.isNull && !price.isNull && !qty.isNull)
-			{
-				writefln("%-30s  %-30s  $%6.2f  %3d", title, author, price, qty);
-			}
-		}
-		writeln();
-	}
+
+    writeln("Available books in inventory:");
+    writefln("%-30s  %-30s   %-6s  %s", "TITLE", "AUTHOR", "PRICE", "QTY");
+    foreach (book; books.children)
+    {
+        auto title = book.lookUpValue!string("title");
+        auto author = book.lookUpValue!string("author");
+        auto price = book.lookUpValue!float("price");
+        auto qty = book.lookUpValue!int("qty");
+        if (!title.isNull && !author.isNull && !price.isNull && !qty.isNull)
+        {
+            writefln("%-30s  %-30s  $%6.2f  %3d", title, author, price, qty);
+        }
+    }
+    writeln();
 
 	// add nodes and values
 	auto book = books.add!(Type.Group);
