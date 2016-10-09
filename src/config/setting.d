@@ -1,6 +1,7 @@
 module config.setting;
 
 import config.config : Config, InconsistentConfigState;
+import config.util : unsafeCast;
 
 import std.traits : isIntegral, isFloatingPoint, isSomeString;
 import std.typecons : Nullable;
@@ -431,7 +432,7 @@ class ArraySetting : AggregateSetting {
         static assert(type.isScalar);
         enforce(_children.length == 0 || _children[0].type == type);
 
-        return cast(TypedSetting!type)addChild("", type);
+        return unsafeCast!(TypedSetting!type)(addChild("", type));
     }
 
     ScalarSetting addScalar(T)(in T value)
@@ -441,7 +442,7 @@ class ArraySetting : AggregateSetting {
         immutable type = scalarType!T;
         enforce(_children.length == 0 || _children[0].type == type);
 
-        auto ss = cast(ScalarSetting)addChild("", type);
+        auto ss = unsafeCast!(ScalarSetting)(addChild("", type));
         ss.value = value;
         return ss;
     }
@@ -462,13 +463,13 @@ class ListSetting : AggregateSetting {
 
     auto add(Type type)()
     {
-        return cast(TypedSetting!type)addChild("", type);
+        return unsafeCast!(TypedSetting!type)(addChild("", type));
     }
 
     ScalarSetting addScalar(T)(in T value)
     if (isScalarCandidate!T)
     {
-        auto ss = cast(ScalarSetting)addChild("", scalarType!T);
+        auto ss = unsafeCast!(ScalarSetting)(addChild("", scalarType!T));
         ss.value = value;
         return ss;
     }
@@ -495,7 +496,7 @@ class GroupSetting : AggregateSetting {
         import std.exception : enforce;
         enforce(validateName(name));
         enforce(!child(name));
-        return cast(TypedSetting!type)addChild(name, type);
+        return unsafeCast!(TypedSetting!type)(addChild(name, type));
     }
 
     ScalarSetting addScalar(T)(in string name, in T value)
@@ -505,7 +506,7 @@ class GroupSetting : AggregateSetting {
         enforce(validateName(name));
         enforce(!child(name));
 
-        auto ss = cast(ScalarSetting)addChild(name, scalarType!T);
+        auto ss = unsafeCast!(ScalarSetting)(addChild(name, scalarType!T));
         ss.value = value;
         return ss;
     }

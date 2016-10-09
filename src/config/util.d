@@ -3,6 +3,57 @@ module config.util;
 import std.range.primitives;
 import std.traits : isSomeString, isSomeChar, Unqual;
 
+
+/// down cast of a reference to a child class reference
+/// runtime check is disabled in release build
+U unsafeCast(U, T)(T obj)
+        if ((is(T==class) || is(T==interface)) &&
+            (is(U==class) || is(U==interface)) &&
+            is(U : T))
+in {
+    assert(obj);
+}
+body {
+    debug {
+        auto uObj = cast(U)obj;
+        assert(uObj, "unsafeCast from "~T.stringof~" to "~U.stringof~" failed");
+        return uObj;
+    }
+    else {
+        static if (is(T == interface) && is(U == class)) {
+            return cast(U)(cast(void*)(cast(Object)obj));
+        }
+        else {
+            return cast(U)(cast(void*)obj);
+        }
+    }
+}
+
+/// ditto
+const(U) unsafeCast(U, T)(const(T) obj)
+        if ((is(T==class) || is(T==interface)) &&
+            (is(U==class) || is(U==interface)) &&
+            is(U : T))
+in {
+    assert(obj);
+}
+body {
+    debug {
+        auto uObj = cast(const(U))obj;
+        assert(uObj, "unsafeCast from "~T.stringof~" to "~U.stringof~" failed");
+        return uObj;
+    }
+    else {
+        static if (is(T == interface) && is(U == class)) {
+            return cast(const(U))(cast(const(void*))(cast(const(Object))obj));
+        }
+        else {
+            return cast(const(U))(cast(const(void*))obj);
+        }
+    }
+}
+
+
 auto findSplitAmong(alias pred="a == b", R1, R2)(R1 seq, R2 choices)
 if (isForwardRange!R1 && isForwardRange!R2)
 {
