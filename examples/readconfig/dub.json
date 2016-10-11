@@ -5,7 +5,7 @@
 	],
 	"description": "libconfig-d usage example",
 	"copyright": "Copyright © 2016, Remi Thebault",
-	"license": "MIT",
+	"license": "BSD/LDC",
 	"targetType": "executable",
 	"stringImportPaths": [".."],
     "dependencies": {
