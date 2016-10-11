@@ -10,8 +10,11 @@
 	"stringImportPaths": [
 		"testdata"
 	],
-	"preGenerateCommands": [
-		"cd $PACKAGE_DIR/grammar_gen && dub run -- -m config.grammar -o $PACKAGE_DIR/src/config/grammar"
+	"preGenerateCommands-dmd": [
+		"cd $PACKAGE_DIR/grammar_gen && dub run --compiler=dmd -- -m config.grammar -o $PACKAGE_DIR/src/config/grammar"
+	],
+	"preGenerateCommands-ldc": [
+		"cd $PACKAGE_DIR/grammar_gen && dub run --compiler=ldc2 -- -m config.grammar -o $PACKAGE_DIR/src/config/grammar"
 	],
 	"subPackages": [
 		"./examples/readconfig",
