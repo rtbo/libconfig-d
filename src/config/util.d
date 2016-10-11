@@ -615,6 +615,7 @@ private class IncludeHandlerImpl(R) : IncludeHandler!(ElementType!R)
         import std.file : exists, read;
         import std.string : lineSplitter;
         import std.regex : ctRegex, matchFirst;
+        import std.conv : to;
 
         _fstCheck = true;
 
@@ -632,7 +633,7 @@ private class IncludeHandlerImpl(R) : IncludeHandler!(ElementType!R)
             assert(!_dir);
             foreach(d; _includeDirs)
             {
-                auto fpath = chainPath(d, fname);
+                auto fpath = chainPath(d, fname).to!string;
                 if (exists(fpath)) {
                     // TODO: handle escaped chars in fname
                     auto content = cast(StringT)read(fpath);
