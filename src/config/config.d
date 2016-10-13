@@ -226,7 +226,7 @@ class Config
                         auto s = new ArraySetting(conf, par, name);
                         auto ss = new Setting[valTree.children.length];
                         foreach (i, pt; valTree.children) {
-                            ss[i] = parseValue(conf, s, "", pt);
+                            ss[i] = parseScalar(conf, s, "", pt);
                         }
                         s.setChildren(ss);
                         return s;
