@@ -3,7 +3,7 @@
 	"authors": [ "Remi Thebault" ],
 	"description": "D library for processing configuration files",
 	"copyright": "Copyright © 2016, Remi Thebault",
-	"license": "BSD/LDC",
+	"license": "BSD",
 	"dependencies": {
 		"pegged" : "~>0.3.2"
 	},
