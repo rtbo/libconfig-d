@@ -15,6 +15,7 @@ enum Option {
     OpenBraceOnSeparateLine     = 0x10,
 }
 
+/// Generic libconfig exception
 class ConfigException : Exception
 {
     this(in string msg)
@@ -23,7 +24,7 @@ class ConfigException : Exception
     }
 }
 
-
+/// Exception thrown when invalid input is met during parsing
 class InvalidConfigInput : ConfigException
 {
     this(in string input, in string errorMsg)
@@ -33,10 +34,14 @@ class InvalidConfigInput : ConfigException
         super("Invalid config input. Error:\n"~errorMsg~"\nInput:\n"~prependLineNumbers(input));
     }
 
+    /// actual parsing input
     string input;
+    /// error message, which differ from msg. msg is composed of input and errorMsg
     string errorMsg;
 }
 
+/// Exception thrown when attempting to build inconsistent configuration.
+/// e.g: when building ArraySetting with different types of children
 class InconsistentConfigState : ConfigException
 {
     this(in string msg)
@@ -97,7 +102,8 @@ class Config
     @property void floatPrecision(ushort val) { _floatPrecision = val; }
 
 
-    /// read a config from an opened file
+    /// Read a config from an opened file.
+    /// The file must be open in text mode (e.g. File(fname, "r"))
     static Config read(File configFile, in string[] includeDirs=[])
     {
         import std.array : join;
@@ -115,7 +121,7 @@ class Config
         return Parser.readConfig(config);
     }
 
-    /// read from configuration string
+    /// Read from configuration string
     static Config readString(in string configStr, string[] includeDirs=[]) {
         import std.string : lineSplitter;
         import std.array : join;
