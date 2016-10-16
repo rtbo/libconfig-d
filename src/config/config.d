@@ -102,10 +102,13 @@ class Config
     {
         import std.array : join;
         import std.stdio : KeepTerminator;
+        import std.exception : enforce;
         import config.util : stripComments, handleIncludeDirs;
 
+        enforce(configFile.isOpen);
+
         immutable config = configFile
-                .byLineCopy(KeepTerminator.no, newline)
+                .byLineCopy(KeepTerminator.no, "\n")
                 .stripComments()
                 .handleIncludeDirs(includeDirs)
                 .join(newline);
