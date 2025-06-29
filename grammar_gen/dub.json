@@ -5,5 +5,5 @@
 	"description": "libconfig grammar generator",
 	"copyright": "Copyright © 2016, Remi Thebault",
 	"license": "MIT",
-    "dependencies": { "pegged": "~>0.3.2" }
+    "dependencies": { "pegged": "~>0.4.9" }
 }
