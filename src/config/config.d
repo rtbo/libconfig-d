@@ -352,7 +352,7 @@ class Config
             in {
                 assert(depth > 1);
             }
-            body {
+            do {
                 put(output, repeat(' ').take((depth-1)*width));
             }
 

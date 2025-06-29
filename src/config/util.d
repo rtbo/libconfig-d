@@ -13,7 +13,7 @@ U unsafeCast(U, T)(T obj)
 in {
     assert(obj);
 }
-body {
+do {
     debug {
         auto uObj = cast(U)obj;
         assert(uObj, "unsafeCast from "~T.stringof~" to "~U.stringof~" failed");
@@ -37,7 +37,7 @@ const(U) unsafeCast(U, T)(const(T) obj)
 in {
     assert(obj);
 }
-body {
+do {
     debug {
         auto uObj = cast(const(U))obj;
         assert(uObj, "unsafeCast from "~T.stringof~" to "~U.stringof~" failed");
