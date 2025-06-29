@@ -365,6 +365,7 @@ if (isInputRange!R && isSomeString!(ElementType!R))
             }
 
             _buf ~= line;
+            if (_buf is null) _buf = ""; // empty line "" must not be null _buf (because that means end of range)!
 
             if (_inBlock) {
                 _input.popFront();
