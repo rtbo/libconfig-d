@@ -13,7 +13,7 @@ U unsafeCast(U, T)(T obj)
 in {
     assert(obj);
 }
-body {
+do {
     debug {
         auto uObj = cast(U)obj;
         assert(uObj, "unsafeCast from "~T.stringof~" to "~U.stringof~" failed");
@@ -37,7 +37,7 @@ const(U) unsafeCast(U, T)(const(T) obj)
 in {
     assert(obj);
 }
-body {
+do {
     debug {
         auto uObj = cast(const(U))obj;
         assert(uObj, "unsafeCast from "~T.stringof~" to "~U.stringof~" failed");
@@ -365,6 +365,7 @@ if (isInputRange!R && isSomeString!(ElementType!R))
             }
 
             _buf ~= line;
+            if (_buf is null) _buf = ""; // empty line "" must not be null _buf (because that means end of range)!
 
             if (_inBlock) {
                 _input.popFront();
@@ -383,42 +384,42 @@ if (isInputRange!R && isSomeString!(ElementType!R))
 unittest {
     // couples of input and expected result
     immutable text = [[
-        "some text\n"
+        "some text\n" ~
         "more text",
 
-        "some text\n"
+        "some text\n" ~
         "more text"
     ],
     [
-        "// start with comments\n"
-        "some text // other comment\n"
+        "// start with comments\n" ~
+        "some text // other comment\n" ~
         "more text",
 
-        "\n"
-        "some text \n"
+        "\n" ~
+        "some text \n" ~
         "more text"
     ],
     [
-        "/ almost a comment but text\n"
-        "some text // an actual comment\n"
+        "/ almost a comment but text\n" ~
+        "some text // an actual comment\n" ~
         "more text",
 
-        "/ almost a comment but text\n"
-        "some text \n"
+        "/ almost a comment but text\n" ~
+        "some text \n" ~
         "more text"
     ],
     [
-        "some text // comment\n"
+        "some text // comment\n" ~
         "more text",
 
-        "some text \n"
+        "some text \n" ~
         "more text"
     ],
     [
-        "some text # comment\n"
+        "some text # comment\n" ~
         "more text",
 
-        "some text \n"
+        "some text \n" ~
         "more text"
     ],
     [
@@ -427,28 +428,28 @@ unittest {
         "some text  more text"
     ],
     [
-        "some text /* comment with // inlined\n"
+        "some text /* comment with // inlined\n" ~
         "over 2 lines */ more text",
 
         "some text  more text"
     ],
     [
-        "some text // comment with /* inlined\n"
+        "some text // comment with /* inlined\n" ~
         "more text",
 
-        "some text \n"
+        "some text \n" ~
         "more text"
     ],
     [
-        "some text # comment with */ inlined\n"
+        "some text # comment with */ inlined\n" ~
         "more text",
 
-        "some text \n"
+        "some text \n" ~
         "more text"
     ],
     [
-        "some text /* multiline comment\n"
-        "still in comment\n"
+        "some text /* multiline comment\n" ~
+        "still in comment\n" ~
         "again comment */ more text",
 
         "some text  more text"

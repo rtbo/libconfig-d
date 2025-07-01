@@ -159,7 +159,7 @@ abstract class Setting {
     }
 
     @property IntegerFormat integerFormat() const {
-        if (!_integerFormat.isNull) return _integerFormat;
+        if (!_integerFormat.isNull) return _integerFormat.get;
         if (parent) return parent.integerFormat;
         return config.defaultIntegerFormat;
     }

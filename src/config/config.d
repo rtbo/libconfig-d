@@ -352,7 +352,7 @@ class Config
             in {
                 assert(depth > 1);
             }
-            body {
+            do {
                 put(output, repeat(' ').take((depth-1)*width));
             }
 
@@ -525,7 +525,7 @@ private string prependLineNumbers(string text) {
     import std.math : log10;
 
     auto lines = text.splitLines(KeepTerminator.yes);
-    immutable width = 1 + cast(int)log10(lines.length);
+    immutable width = 1 + cast(int)log10(cast(double)lines.length);
     string res;
     foreach(i, l; lines) {
         res ~= format("%*s. %s", width, i+1, l);

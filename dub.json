@@ -5,7 +5,7 @@
 	"copyright": "Copyright © 2016, Remi Thebault",
 	"license": "BSD",
 	"dependencies": {
-		"pegged" : "~>0.3.2"
+		"pegged" : "~>0.4.9"
 	},
 	"stringImportPaths": [
 		"testdata"
